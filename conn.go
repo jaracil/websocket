@@ -18,7 +18,10 @@ import (
 func beginHandlerOpen(ch chan error, removeHandlers func()) func(ev *js.Object) {
 	return func(ev *js.Object) {
 		removeHandlers()
-		close(ch)
+		select {
+		case ch <- nil:
+		default:
+		}
 	}
 }
 
@@ -43,10 +46,10 @@ func (e *closeError) Error() string {
 func beginHandlerClose(ch chan error, removeHandlers func()) func(ev *js.Object) {
 	return func(ev *js.Object) {
 		removeHandlers()
-		go func() {
-			ch <- &closeError{Object: ev}
-			close(ch)
-		}()
+		select {
+		case ch <- &closeError{Object: ev}:
+		default:
+		}
 	}
 }
 
